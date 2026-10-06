@@ -40,6 +40,8 @@ const columns = [
 | `hideable`     | `false` stops users hiding it in the column manager.  |
 | `render`       | `(row, rowIndex) => content`. Default: `row[key]`.   |
 | `renderHeader` | `() => content`. Default: `header`.                  |
+| `align`        | `"right"` right-aligns header and cells (numbers).   |
+| `testId`       | `data-testid` on the column's cells; header cells get `"<testId>-header"`. |
 
 ## Props
 
@@ -47,7 +49,11 @@ const columns = [
 | ------------------ | -------- | ------------------------------------------ |
 | `rows`             | —        | Array of row objects.                      |
 | `columns`          | —        | Column definitions (above).                |
-| `height`           | —        | Any CSS height. Required.                  |
+| `height`           | —        | Any CSS height. Omit it to size the grid to its rows. |
+| `maxHeight`        | —        | Cap for the auto height (e.g. `"calc(100dvh - 16rem)"`). |
+| `onRowClick`       | —        | `(row, rowIndex, event) => void`. Rows get a pointer cursor. |
+| `rowProps`         | —        | `(row, rowIndex) => attributes` merged onto each row: `className`, `onClick`, `data-*`, `style`. |
+| `renderEmpty`      | —        | `() => content` shown under the header when `rows` is empty. |
 | `width`            | `"100%"` | Any CSS width.                             |
 | `rowHeight`        | `30`     | Row height in px.                          |
 | `headerHeight`     | `30`     | Header height in px.                       |
@@ -57,6 +63,13 @@ const columns = [
 | `onColumnStateChange` | —     | Called with the new layout on every change. |
 | `persistKey`       | —        | Save the layout in this browser under this key. |
 | `className`, `style`, other div props | | Passed to the outer element. |
+
+## Accessibility
+
+The grid is announced like a table: `role="grid"` with `aria-rowcount` /
+`aria-colcount`, `role="row"` + `aria-rowindex` on the header and every row
+(virtualized rows keep their real index), `role="columnheader"` and
+`role="gridcell"` with `aria-colindex` on cells.
 
 ## Column manager
 
@@ -170,7 +183,13 @@ All built-in styles have zero specificity, so plain CSS wins, no `!important`:
 .vgrid__cell { padding: 0 8px; }
 ```
 
-Or change the variables, globally or on your own `className`:
+Two variables work with or without a theme (they default to none):
+
+```css
+.vgrid-root { --vgrid-cell-padding: 0 8px; --vgrid-row-border: 1px solid #eee; }
+```
+
+Or change the theme variables, globally or on your own `className`:
 
 ```css
 .my-grid {

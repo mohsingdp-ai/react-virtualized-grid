@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>features e2e</title>
+    <style>
+      /* styling variables must work without any theme class */
+      .vgrid-root {
+        --vgrid-cell-padding: 0 7px;
+        --vgrid-row-border: 2px solid red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      // ?rows=N (default 6): row count. No `height` prop: the grid sizes to
+      // its rows, capped by maxHeight.
+      import { createElement as h } from "react";
+      import { createRoot } from "react-dom/client";
+      import { VirtualGrid } from "/src/lib/index.js";
+
+      const count = Number(new URLSearchParams(location.search).get("rows") ?? 6);
+      const rows = Array.from({ length: count }, (_, i) => ({
+        id: 100 + i,
+        name: `Row ${i}`,
+        amount: (i + 1) * 10
+      }));
+      const columns = [
+        { key: "id", header: "ID", width: 80, pinned: true, testId: "id" },
+        { key: "name", header: "Name", width: 120 },
+        { key: "amount", header: "Amount", width: 100, align: "right", testId: "amount" },
+        { key: "note", header: "Note", width: 100, render: (row) => `n${row.id}` }
+      ];
+      window.__clicks = [];
+      window.__errors = [];
+      addEventListener("error", (e) => window.__errors.push(e.message));
+      createRoot(document.getElementById("root"), {
+        onUncaughtError: (e) => window.__errors.push(e.message)
+      }).render(
+        h(VirtualGrid, {
+          rows,
+          columns,
+          rowHeight: 30,
+          headerHeight: 30,
+          maxHeight: 160,
+          columnManager: true,
+          onRowClick: (row, index, event) =>
+            window.__clicks.push({ via: "onRowClick", id: row.id, index, tag: event.target.tagName }),
+          rowProps: (row, index) => ({
+            className: index % 2 ? "odd" : "even",
+            "data-id": row.id,
+            onClick: () => window.__clicks.push({ via: "rowProps", id: row.id })
+          }),
+          renderEmpty: () => h("p", { className: "empty-msg", style: { margin: 0 } }, "No transactions")
+        })
+      );
+    </script>
+  </body>
+</html>

@@ -17,6 +17,10 @@ export interface VirtualGridColumn<Row> {
   render?: (row: Row, rowIndex: number) => ReactNode;
   /** Custom header content. Default: `header`. */
   renderHeader?: () => ReactNode;
+  /** Horizontal alignment of header and cells. Default "left". */
+  align?: "left" | "right";
+  /** `data-testid` for this column's cells; header cells get `"<testId>-header"`. */
+  testId?: string;
 }
 
 /** Column layout from the column manager. Arrays of column keys; safe to JSON.stringify. */
@@ -37,8 +41,19 @@ export interface VirtualGridProps<Row>
   headerHeight?: number;
   /** Any CSS width. Default "100%". */
   width?: number | string;
-  /** Any CSS height. Required: the grid scrolls inside it. */
-  height: number | string;
+  /**
+   * Any CSS height; the grid scrolls inside it. Omit it to size the grid to its
+   * rows (use `maxHeight` to cap that).
+   */
+  height?: number | string;
+  /** Any CSS max-height. Mostly for use without `height`. */
+  maxHeight?: number | string;
+  /** Called when a row is clicked. Rows get `.vgrid__row--clickable` (pointer cursor). */
+  onRowClick?: (row: Row, rowIndex: number, event: React.MouseEvent<HTMLDivElement>) => void;
+  /** Extra attributes per row (className, onClick, data-*, style, ...). Merged with the grid's own. */
+  rowProps?: (row: Row, rowIndex: number) => HTMLAttributes<HTMLDivElement> & Record<`data-${string}`, string | number | undefined>;
+  /** Shown under the header when `rows` is empty. */
+  renderEmpty?: () => ReactNode;
   /** Extra rows rendered above/below the viewport. Default 1. */
   overscanRowCount?: number;
   /**

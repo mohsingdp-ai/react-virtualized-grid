@@ -3,21 +3,8 @@
 // Runs in the locally installed Chrome; no browser download.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createServer } from "vite";
+import { startServer } from "./helpers.mjs";
 import { chromium } from "playwright-core";
-
-const startServer = async () => {
-  const server = await createServer({
-    logLevel: "silent",
-    server: { port: 0 },
-    // pre-bundle up front, so the dev server doesn't reload the page mid-test
-    optimizeDeps: {
-      include: ["react", "react-dom/client", "react-window", "@atlaskit/pragmatic-drag-and-drop/element/adapter"]
-    }
-  });
-  await server.listen();
-  return server;
-};
 
 test("hide / pin / reset / resize never crash the grid", async () => {
   const server = await startServer();

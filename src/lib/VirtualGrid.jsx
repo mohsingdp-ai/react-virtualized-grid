@@ -48,6 +48,20 @@ const writeStoredState = (key, state) => {
   }
 };
 
+// height of a horizontal scrollbar (0 for overlay scrollbars), measured once
+let measuredScrollbar;
+const scrollbarSize = () => {
+  if (measuredScrollbar === undefined) {
+    const probe = document.createElement("div");
+    probe.style.cssText =
+      "position:absolute;visibility:hidden;width:100px;height:100px;overflow:scroll";
+    document.body.appendChild(probe);
+    measuredScrollbar = probe.offsetHeight - probe.clientHeight;
+    probe.remove();
+  }
+  return measuredScrollbar;
+};
+
 // only loaded when the panel is first opened (it pulls in drag and drop)
 const ColumnManager = lazy(() => import("./ColumnManager.jsx"));
 
@@ -66,19 +80,34 @@ const headerContent = (column) =>
 
 // memo: a column step re-renders every row, but only the recycled cell
 // updates; pinned cells (e.g. checkboxes) are left untouched
-const Cell = memo(({ row, rowIndex, column, left }) => (
-  <div className="vgrid__cell" style={{ left, width: column.width }}>
+// per-cell attributes: screen-reader role + 1-based column index, alignment,
+// test id (header cells get "<testId>-header")
+const cellAttrs = (column, colIndex, header) => ({
+  role: header ? "columnheader" : "gridcell",
+  "aria-colindex": colIndex,
+  "data-align": column.align === "right" ? "right" : undefined,
+  "data-testid":
+    column.testId && (header ? `${column.testId}-header` : column.testId)
+});
+
+const Cell = memo(({ row, rowIndex, column, colIndex, left }) => (
+  <div
+    className="vgrid__cell"
+    style={{ left, width: column.width }}
+    {...cellAttrs(column, colIndex)}
+  >
     {cellContent(column, row, rowIndex)}
   </div>
 ));
 
 const PinnedCells = memo(({ row, rowIndex, pinnedColumns, pinnedWidth }) => (
   <div className="vgrid__pinned" style={{ width: pinnedWidth }}>
-    {pinnedColumns.map((column) => (
+    {pinnedColumns.map((column, i) => (
       <div
         key={column.key}
         className="vgrid__pinned-cell"
         style={{ width: column.width }}
+        {...cellAttrs(column, i + 1)}
       >
         {cellContent(column, row, rowIndex)}
       </div>
@@ -99,10 +128,14 @@ const Row = ({
   offsets,
   rowWidth,
   headerHeight,
-  slots
+  slots,
+  onRowClick,
+  rowProps
 }) => {
   const [first, last] = useContext(ColumnWindowContext);
   const row = rows[index];
+  const extra = rowProps ? rowProps(row, index) : undefined;
+  const clickable = !!(onRowClick || extra?.onClick);
   // indexed by slot, not column: DOM order stays fixed, so the cell leaving
   // view is updated in place for the one entering instead of re-created
   const cells = new Array(slots);
@@ -113,14 +146,26 @@ const Row = ({
         row={row}
         rowIndex={index}
         column={scrollColumns[c]}
+        colIndex={pinnedColumns.length + c + 1}
         left={pinnedWidth + offsets[c]}
       />
     );
   }
   return (
     <div
-      className="vgrid__row"
-      style={{ ...style, top: headerHeight, width: rowWidth }}
+      {...extra}
+      role="row"
+      aria-rowindex={index + 2} // the header is row 1
+      className={
+        "vgrid__row" +
+        (clickable ? " vgrid__row--clickable" : "") +
+        (extra?.className ? ` ${extra.className}` : "")
+      }
+      style={{ ...style, top: headerHeight, width: rowWidth, ...extra?.style }}
+      onClick={(event) => {
+        extra?.onClick?.(event);
+        onRowClick?.(row, index, event);
+      }}
     >
       {pinnedColumns.length > 0 && (
         <PinnedCells
@@ -152,6 +197,7 @@ const Header = ({
         key={column.key}
         className="vgrid__header-cell vgrid__header-cell--scroll"
         style={{ left: pinnedWidth + offsets[c], width: column.width }}
+        {...cellAttrs(column, pinnedColumns.length + c + 1, true)}
       >
         {headerContent(column)}
       </div>
@@ -160,15 +206,18 @@ const Header = ({
   return (
     <div
       className="vgrid__header"
+      role="row"
+      aria-rowindex={1}
       style={{ height: headerHeight, width: rowWidth }}
     >
       {pinnedColumns.length > 0 && (
         <div className="vgrid__pinned" style={{ width: pinnedWidth }}>
-          {pinnedColumns.map((column) => (
+          {pinnedColumns.map((column, i) => (
             <div
               key={column.key}
               className="vgrid__header-cell"
               style={{ width: column.width }}
+              {...cellAttrs(column, i + 1, true)}
             >
               {headerContent(column)}
             </div>
@@ -187,7 +236,11 @@ export const VirtualGrid = ({
   headerHeight = 30,
   width = "100%",
   height,
+  maxHeight,
   overscanRowCount = 1,
+  onRowClick,
+  rowProps,
+  renderEmpty,
   columnManager = false,
   initialColumnState,
   onColumnStateChange,
@@ -289,12 +342,21 @@ export const VirtualGrid = ({
   const panelId =
     typeof columnManager === "string" ? columnManager : generatedId;
   const builtInButton = columnManager === true;
+
+  // No `height`: the scroll area is as tall as its rows (capped by maxHeight
+  // on the outer element); with no rows it sizes to the header + empty state.
+  const listHeight =
+    height === undefined && rows.length > 0
+      ? rows.length * rowHeight +
+        headerHeight +
+        (rowWidth > viewportWidth ? scrollbarSize() : 0)
+      : undefined;
   const [managerOpen, setManagerOpen] = useState(false);
 
   return (
     <div
       className={className ? `vgrid-root ${className}` : "vgrid-root"}
-      style={{ width, height, ...style }}
+      style={{ width, height, maxHeight, ...style }}
       {...rest}
     >
       {builtInButton && (
@@ -346,8 +408,13 @@ export const VirtualGrid = ({
             offsets,
             rowWidth,
             headerHeight,
-            slots
+            slots,
+            onRowClick,
+            rowProps
           }}
+          role="grid"
+          aria-rowcount={rows.length + 1}
+          aria-colcount={shownColumns.length}
           onScroll={onScroll}
           onResize={(size) => setViewportWidth(size.width)}
           className="vgrid"
@@ -355,6 +422,7 @@ export const VirtualGrid = ({
           // frame on non-retina screens (to keep LCD text), ~5ms per frame
           style={{
             minHeight: 0,
+            height: listHeight,
             overflow: "auto",
             willChange: "scroll-position"
           }}
@@ -367,6 +435,9 @@ export const VirtualGrid = ({
             scrollColumns={scrollColumns}
             offsets={offsets}
           />
+          {rows.length === 0 && renderEmpty && (
+            <div className="vgrid__empty">{renderEmpty()}</div>
+          )}
         </List>
       </ColumnWindowContext.Provider>
     </div>

@@ -55,6 +55,21 @@
   align-items: center;
   overflow: hidden;
   white-space: nowrap;
+  padding: var(--vgrid-cell-padding, 0);
+}
+
+/* column `align: "right"` */
+:where([data-align="right"]) {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+:where(.vgrid__row) {
+  border-bottom: var(--vgrid-row-border, none);
+}
+
+:where(.vgrid__row--clickable) {
+  cursor: pointer;
 }
 
 /* the header and pinned columns must be opaque, or scrolled cells show through */
@@ -119,12 +134,7 @@
 }
 
 :where(.vgrid--carbon) :where(.vgrid__cell, .vgrid__pinned-cell) {
-  padding: var(--vgrid-cell-padding);
   border-bottom: 1px solid var(--vgrid-border-color);
-}
-
-:where(.vgrid--carbon) :where(.vgrid__header-cell) {
-  padding: var(--vgrid-cell-padding);
 }
 
 :where(.vgrid--carbon) :where(.vgrid__pinned) {
