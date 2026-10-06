@@ -83,3 +83,13 @@ npm test              # column-math tests
 npm run build         # library -> dist/
 npm run build:demo    # demo app -> demo-dist/
 ```
+
+## Releasing
+
+Every merge to `main` that changes the library (`src/lib/`, `index.d.ts`,
+`package.json`, `vite.config.js`) publishes to npm automatically and tags the
+commit (`vX.Y.Z`).
+
+- Default: patch bump of the latest npm version (1.0.4 -> 1.0.5).
+- Minor/major: set the new version in `package.json` in your PR (e.g. `1.1.0`).
+- Demo or docs-only changes don't publish.
