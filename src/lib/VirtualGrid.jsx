@@ -5,6 +5,7 @@ import {
   Suspense,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useLayoutEffect,
   useMemo,
@@ -20,9 +21,32 @@ import {
 import {
   applyColumnState,
   defaultColumnState,
+  isColumnState,
   syncColumnState
 } from "./columnState.js";
 import "./VirtualGrid.css";
+
+// useLayoutEffect warns during server rendering on React 18
+const useClientLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+// persistKey storage: per browser, per device; never throws (private mode,
+// blocked storage, quota) and ignores corrupt or foreign data
+const readStoredState = (key) => {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return isColumnState(value) ? value : null;
+  } catch {
+    return null;
+  }
+};
+const writeStoredState = (key, state) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    // storage unavailable or full: the layout just isn't remembered
+  }
+};
 
 // only loaded when the panel is first opened (it pulls in drag and drop)
 const ColumnManager = lazy(() => import("./ColumnManager.jsx"));
@@ -170,14 +194,23 @@ export const VirtualGrid = ({
   columnManager = false,
   initialColumnState,
   onColumnStateChange,
+  persistKey,
   className,
   style,
   ...rest
 }) => {
   // column layout (order / hidden / pinned), fitted to the current columns
-  const [savedState, setSavedState] = useState(
-    () => initialColumnState ?? defaultColumnState(columns)
+  const [savedState, setSavedState] = useState(() =>
+    isColumnState(initialColumnState)
+      ? initialColumnState
+      : defaultColumnState(columns)
   );
+  // restore after mount (not during render) so server-rendered HTML matches;
+  // a layout effect still applies it before the first paint
+  useClientLayoutEffect(() => {
+    const stored = persistKey && readStoredState(persistKey);
+    if (stored) setSavedState(stored);
+  }, [persistKey]);
   const columnState = useMemo(
     () => syncColumnState(savedState, columns),
     [savedState, columns]
@@ -185,9 +218,10 @@ export const VirtualGrid = ({
   const changeColumnState = useCallback(
     (next) => {
       setSavedState(next);
+      if (persistKey) writeStoredState(persistKey, next);
       onColumnStateChange?.(next);
     },
-    [onColumnStateChange]
+    [onColumnStateChange, persistKey]
   );
   const shownColumns = useMemo(
     () => applyColumnState(columns, columnState),

@@ -27,28 +27,10 @@ const dataColumns = [
 // Carbon data table sizes (row and header height in px)
 const SIZES = { xs: 24, sm: 32, md: 40, lg: 48 };
 
-// column layout survives reloads (the grid ignores stale or unknown keys)
-const LAYOUT_KEY = "vgrid-demo-columns";
-const loadLayout = () => {
-  try {
-    return JSON.parse(localStorage.getItem(LAYOUT_KEY)) ?? undefined;
-  } catch {
-    return undefined;
-  }
-};
-const saveLayout = (state) => {
-  try {
-    localStorage.setItem(LAYOUT_KEY, JSON.stringify(state));
-  } catch {
-    // storage full or blocked: layout just won't persist
-  }
-};
-
 const Demo = () => {
   const [theme, setTheme] = useState("vgrid--carbon");
   const [size, setSize] = useState("xs");
   const [manager, setManager] = useState(true);
-  const [savedLayout] = useState(loadLayout);
   const [checkedRows, setCheckedRows] = useState({});
   // derived, not stored: avoids a second render after every click
   const checkedCount = Object.keys(checkedRows).length;
@@ -139,8 +121,8 @@ const Demo = () => {
         rowHeight={SIZES[size]}
         headerHeight={SIZES[size]}
         columnManager={manager}
-        initialColumnState={savedLayout}
-        onColumnStateChange={saveLayout}
+        // remembers the column layout in this browser
+        persistKey="vgrid-demo-columns"
         height="calc(100vh - 140px)"
       />
     </>

@@ -43,10 +43,15 @@ export interface VirtualGridProps<Row>
   overscanRowCount?: number;
   /** Show the "Columns" button: reorder (drag or ↑/↓), show/hide and pin columns. Default false. */
   columnManager?: boolean;
-  /** Restore a saved layout (from `onColumnStateChange`). Unknown keys are ignored, new columns added. */
+  /** Restore a saved layout (from `onColumnStateChange`). Read once on mount. Unknown keys are ignored, new columns added. */
   initialColumnState?: ColumnState;
   /** Called whenever the user changes the layout. Save it to restore later. */
   onColumnStateChange?: (state: ColumnState) => void;
+  /**
+   * Save the layout in this browser (localStorage) under this key and restore it on load.
+   * Per browser and device only; use onColumnStateChange + initialColumnState to save on a server.
+   */
+  persistKey?: string;
   className?: string;
   style?: CSSProperties;
 }

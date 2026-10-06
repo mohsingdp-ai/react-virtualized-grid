@@ -55,6 +55,7 @@ const columns = [
 | `columnManager`    | `false`  | Show the "Columns" button (see below).     |
 | `initialColumnState` | —      | Restore a saved column layout.             |
 | `onColumnStateChange` | —     | Called with the new layout on every change. |
+| `persistKey`       | —        | Save the layout in this browser under this key. |
 | `className`, `style`, other div props | | Passed to the outer element. |
 
 ## Column manager
@@ -69,24 +70,39 @@ const columns = [
 
 The panel's code (and drag and drop) only loads when it's first opened.
 
-Save the layout to keep it across visits:
+### Saving the layout
+
+**In this browser** — one prop. The grid saves to `localStorage` and restores
+on load:
 
 ```jsx
-const saved = JSON.parse(localStorage.getItem("cols") ?? "null") ?? undefined;
+<VirtualGrid columnManager persistKey="orders-table" rows={rows} columns={columns} height={600} />
+```
 
+Per browser and device only: Chrome and Firefox, or laptop and phone, each keep
+their own layout. Cleared with the browser's site data. If storage is blocked
+or full, changes still work, they just aren't remembered.
+
+**For a user on any browser or device** — save it on your server:
+
+```jsx
+const [layout, setLayout] = useState();      // undefined = still loading
+useEffect(() => { api.getLayout().then((l) => setLayout(l ?? null)); }, []);
+
+if (layout === undefined) return <Spinner />; // initialColumnState is read once, on mount
 <VirtualGrid
   columnManager
-  initialColumnState={saved}
-  onColumnStateChange={(state) => localStorage.setItem("cols", JSON.stringify(state))}
+  initialColumnState={layout ?? undefined}
+  onColumnStateChange={(state) => api.saveLayout(state)} // debounce if you like
   rows={rows}
   columns={columns}
   height={600}
 />;
 ```
 
-The state is `{ order, hidden, pinned }`, each an array of column keys. Saved
-keys for columns that no longer exist are ignored; new columns are added at
-the end.
+The state is `{ order, hidden, pinned }`, each an array of column keys (JSON).
+Saved keys for columns that no longer exist are ignored, new columns are
+added at the end, and invalid data falls back to the defaults.
 
 ## Performance tips
 

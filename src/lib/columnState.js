@@ -90,3 +90,14 @@ export const toggleHidden = (state, key) => ({
 });
 
 export const showAllColumns = (state) => ({ ...state, hidden: [] });
+
+// Shape check for state from storage or a server: arrays of string keys.
+const isKeyList = (value) =>
+  Array.isArray(value) && value.every((key) => typeof key === "string");
+
+export const isColumnState = (value) =>
+  value !== null &&
+  typeof value === "object" &&
+  isKeyList(value.order) &&
+  isKeyList(value.hidden) &&
+  isKeyList(value.pinned);

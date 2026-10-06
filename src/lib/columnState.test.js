@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   applyColumnState,
   defaultColumnState,
+  isColumnState,
   moveColumn,
   showAllColumns,
   syncColumnState,
@@ -79,4 +80,11 @@ test("sync a saved state with changed columns", () => {
     hidden: ["a"],
     pinned: ["d", "f"]
   });
+});
+
+test("isColumnState rejects bad saved data", () => {
+  assert.equal(isColumnState({ order: ["a"], hidden: [], pinned: ["a"] }), true);
+  for (const bad of [null, "x", 3, {}, { order: "a", hidden: [], pinned: [] }, { order: [1], hidden: [], pinned: [] }, { order: [], hidden: [] }]) {
+    assert.equal(isColumnState(bad), false, JSON.stringify(bad));
+  }
 });
