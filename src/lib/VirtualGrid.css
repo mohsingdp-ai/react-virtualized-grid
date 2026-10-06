@@ -16,6 +16,7 @@
 
 .vgrid {
   flex: 1 1 auto;
+  height: var(--vgrid-auto-height, auto);
 }
 
 :where(.vgrid-toolbar) {

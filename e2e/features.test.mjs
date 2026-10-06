@@ -61,6 +61,38 @@ test("auto height fits the rows exactly when under maxHeight", () =>
     assert.equal(await page.$$eval(".vgrid__row", (els) => els.length), 3);
   }));
 
+test("auto height with many rows still virtualizes and measures the width", () =>
+  withPage(async (page, base) => {
+    await page.goto(`${base}e2e/features.html?rows=500&wide`);
+    await page.waitForSelector(".vgrid__cell");
+    await page.waitForTimeout(200);
+    const rowsInDom = await page.$$eval(".vgrid__row", (els) => els.length);
+    assert.ok(rowsInDom < 20, `only visible rows rendered, got ${rowsInDom}`);
+    assert.equal(await page.$eval(".vgrid-root", (el) => Math.round(el.getBoundingClientRect().height)), 160);
+    assert.ok(await page.$eval(".vgrid", (el) => el.scrollHeight > el.clientHeight), "scrolls vertically");
+    // 34 columns (6400px) in a 1440px viewport: the column window must be sized
+    // from the measured width (unmeasured = 0 -> only 3 + pinned columns)
+    const headerCells = await page.$$eval(".vgrid__header-cell", (els) => els.length);
+    assert.ok(headerCells > 8 && headerCells < 34, `column window sized to the viewport, got ${headerCells}`);
+    await page.$eval(".vgrid", (el) => el.scrollTo(0, 6000));
+    await page.waitForTimeout(200);
+    assert.ok(await page.$('.vgrid__row[data-id="300"]'), "row 200 rendered after scrolling");
+    assert.deepEqual(await page.evaluate(() => window.__errors), []);
+  }));
+
+test("renderEmpty with a header wider than the box shows no horizontal scrollbar", () =>
+  withPage(async (page, base) => {
+    await page.goto(`${base}e2e/features.html?rows=0&wide`);
+    await page.waitForSelector(".empty-msg");
+    // a classic scrollbar takes height inside the box; overlay scrollbars take none either way
+    const bar = await page.$eval(".vgrid", (el) => ({
+      overflowX: getComputedStyle(el).overflowX,
+      scrollbarHeight: el.offsetHeight - el.clientHeight
+    }));
+    assert.deepEqual(bar, { overflowX: "hidden", scrollbarHeight: 0 });
+    assert.ok(await page.$(".vgrid__header"), "header still rendered");
+  }));
+
 test("renderEmpty shows under the header and keeps the Columns button", () =>
   withPage(async (page, base) => {
     await page.goto(`${base}e2e/features.html?rows=0`);

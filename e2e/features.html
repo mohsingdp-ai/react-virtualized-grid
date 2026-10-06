@@ -32,6 +32,10 @@
         { key: "amount", header: "Amount", width: 100, align: "right", testId: "amount" },
         { key: "note", header: "Note", width: 100, render: (row) => `n${row.id}` }
       ];
+      // ?wide: 30 more 200px columns, far wider than the viewport
+      if (location.search.includes("wide")) {
+        for (let i = 0; i < 30; i++) columns.push({ key: `w${i}`, header: `Wide ${i}`, width: 200, render: () => "" });
+      }
       window.__clicks = [];
       window.__errors = [];
       addEventListener("error", (e) => window.__errors.push(e.message));

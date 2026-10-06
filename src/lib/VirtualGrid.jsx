@@ -345,6 +345,8 @@ export const VirtualGrid = ({
 
   // No `height`: the scroll area is as tall as its rows (capped by maxHeight
   // on the outer element); with no rows it sizes to the header + empty state.
+  // Passed as a CSS variable: react-window treats a numeric style.height as
+  // the viewport size (rendering every row) and stops measuring the width.
   const listHeight =
     height === undefined && rows.length > 0
       ? rows.length * rowHeight +
@@ -422,8 +424,11 @@ export const VirtualGrid = ({
           // frame on non-retina screens (to keep LCD text), ~5ms per frame
           style={{
             minHeight: 0,
-            height: listHeight,
+            "--vgrid-auto-height":
+              listHeight === undefined ? undefined : `${listHeight}px`,
             overflow: "auto",
+            // no rows: a header wider than the box must not add a scrollbar
+            overflowX: rows.length === 0 ? "hidden" : undefined,
             willChange: "scroll-position"
           }}
         >
