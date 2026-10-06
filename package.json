@@ -44,7 +44,7 @@
     "preview:demo": "vite preview --outDir demo-dist",
     "test": "node --test \"src/lib/*.test.js\"",
     "prepublishOnly": "npm test && npm run test:e2e && npm run build",
-    "test:e2e": "node --test e2e/"
+    "test:e2e": "node --test \"e2e/*.test.mjs\""
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
