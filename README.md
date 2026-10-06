@@ -1,4 +1,4 @@
-# react-window-sticky-grid
+# @mejazbese21/react-window-sticky-grid
 
 Virtualized React grid with a sticky header and pinned (frozen) left columns.
 Only the visible rows and columns are rendered, so it stays smooth with
@@ -7,7 +7,7 @@ Only the visible rows and columns are rendered, so it stays smooth with
 ## Install
 
 ```sh
-npm install react-window-sticky-grid
+npm install @mejazbese21/react-window-sticky-grid
 ```
 
 Needs React 18 or 19.
@@ -15,8 +15,8 @@ Needs React 18 or 19.
 ## Use
 
 ```jsx
-import { VirtualGrid } from "react-window-sticky-grid";
-import "react-window-sticky-grid/style.css";
+import { VirtualGrid } from "@mejazbese21/react-window-sticky-grid";
+import "@mejazbese21/react-window-sticky-grid/style.css";
 
 const columns = [
   { key: "id", header: "ID", width: 70, pinned: true },
