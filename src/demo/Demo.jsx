@@ -24,7 +24,12 @@ const dataColumns = [
   }))
 ];
 
+// Carbon data table sizes (row and header height in px)
+const SIZES = { xs: 24, sm: 32, md: 40, lg: 48 };
+
 const Demo = () => {
+  const [theme, setTheme] = useState("vgrid--carbon");
+  const [size, setSize] = useState("xs");
   const [checkedRows, setCheckedRows] = useState({});
   // derived, not stored: avoids a second render after every click
   const checkedCount = Object.keys(checkedRows).length;
@@ -79,9 +84,34 @@ const Demo = () => {
       <h1>VirtualGrid demo</h1>
       <p>
         {ROW_COUNT.toLocaleString()} rows × {columns.length.toLocaleString()} columns
-        · {checkedCount} selected
+        · {checkedCount} selected ·{" "}
+        <label>
+          Theme{" "}
+          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+            <option value="vgrid--carbon">Carbon</option>
+            <option value="">None (unstyled)</option>
+          </select>
+        </label>{" "}
+        <label>
+          Size{" "}
+          <select value={size} onChange={(e) => setSize(e.target.value)}>
+            {Object.entries(SIZES).map(([name, px]) => (
+              <option key={name} value={name}>
+                {name} ({px}px)
+              </option>
+            ))}
+          </select>
+        </label>
       </p>
-      <VirtualGrid rows={rows} columns={columns} width={1700} height={800} />
+      <VirtualGrid
+        rows={rows}
+        columns={columns}
+        className={theme || undefined}
+        rowHeight={SIZES[size]}
+        headerHeight={SIZES[size]}
+        width={1700}
+        height={800}
+      />
     </>
   );
 };

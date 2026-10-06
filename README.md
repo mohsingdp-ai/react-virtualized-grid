@@ -61,19 +61,56 @@ const columns = [
 - Huge or computed data: keep rows small and compute cell text in `render`
   instead of storing it.
 
-## Theme
+## Styling
 
-Override these CSS variables on `.vgrid` or your own `className`:
+Without a class the grid is unstyled: it only does layout, sticky header and
+pinned columns. Style it yourself, or opt in to the built-in theme.
+
+### Carbon theme
+
+[Carbon Design System](https://carbondesignsystem.com) data table look (white
+theme). Add the class and pick a Carbon row size:
+
+```jsx
+<VirtualGrid
+  className="vgrid--carbon"
+  rowHeight={24} // xs (thin). sm: 32, md: 40, lg: 48
+  headerHeight={24}
+  rows={rows}
+  columns={columns}
+  height={600}
+/>
+```
+
+It uses IBM Plex Sans if your page loads it, else the system font.
+
+### Overriding
+
+All built-in styles have zero specificity, so plain CSS wins, no `!important`:
+
+```css
+.vgrid__cell { padding: 0 8px; }
+```
+
+Or change the variables, globally or on your own `className`:
 
 ```css
 .my-grid {
-  --vgrid-border: 1px solid #ddd;
-  --vgrid-header-bg: #f5f5f5;
-  --vgrid-pinned-bg: #fafafa;
-  --vgrid-pinned-header-bg: #eee;
-  --vgrid-cell-padding: 0 8px;
+  --vgrid-bg: #fff;            /* rows */
+  --vgrid-header-bg: #f2f4f8;
+  --vgrid-hover-bg: #e8e8e8;
+  --vgrid-border-color: #e0e0e0;
+  --vgrid-text: #525252;
+  --vgrid-header-text: #161616;
+  --vgrid-pinned-divider: transparent;
+  --vgrid-cell-padding: 0 12px;
+  --vgrid-font: Inter, sans-serif;
 }
 ```
+
+Elements you can target: `.vgrid` (scroll container), `.vgrid__header`,
+`.vgrid__row`, `.vgrid__cell`, `.vgrid__pinned` (pinned block),
+`.vgrid__pinned-cell`, `.vgrid__header-cell`.
 
 ## Develop
 

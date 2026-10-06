@@ -1,12 +1,8 @@
-/* Override these on .vgrid (or your own className) to theme the grid. */
-.vgrid {
-  --vgrid-border: 1px solid gray;
-  --vgrid-header-bg: lightblue;
-  --vgrid-pinned-bg: lightblue;
-  --vgrid-pinned-header-bg: lightgreen;
-  --vgrid-cell-padding: 0 10px;
-}
-
+/*
+ * Base: only what the grid needs to work (positioning, sticky parts).
+ * Everything visual sits in :where(), which has zero specificity, so any
+ * CSS you write (or any --vgrid-* variable you set) overrides it.
+ */
 .vgrid,
 .vgrid * {
   box-sizing: border-box;
@@ -24,26 +20,12 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  height: 100%;
   display: flex;
-  background: var(--vgrid-pinned-bg);
+  height: 100%;
 }
 
 .vgrid__header .vgrid__pinned {
   z-index: 3;
-  background: var(--vgrid-pinned-header-bg);
-}
-
-.vgrid__cell,
-.vgrid__pinned-cell,
-.vgrid__header-cell {
-  display: flex;
-  align-items: center;
-  padding: var(--vgrid-cell-padding);
-  border-right: var(--vgrid-border);
-  border-bottom: var(--vgrid-border);
-  overflow: hidden;
-  white-space: nowrap;
 }
 
 .vgrid__cell,
@@ -53,6 +35,70 @@
   height: 100%;
 }
 
-.vgrid__header-cell--scroll {
-  background: var(--vgrid-header-bg);
+:where(.vgrid__cell, .vgrid__pinned-cell, .vgrid__header-cell) {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* the header and pinned columns must be opaque, or scrolled cells show through */
+:where(.vgrid__header, .vgrid__pinned) {
+  background: var(--vgrid-pinned-bg, var(--vgrid-bg, Canvas));
+}
+
+:where(.vgrid__header, .vgrid__header .vgrid__pinned) {
+  background: var(--vgrid-header-bg, var(--vgrid-bg, Canvas));
+}
+
+/*
+ * Carbon Design System data table theme (white theme tokens).
+ * Opt in with className="vgrid--carbon"; pair with rowHeight/headerHeight
+ * 24 (xs, thin), 32 (sm), 40 (md) or 48 (lg).
+ */
+:where(.vgrid--carbon) {
+  --vgrid-font: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont,
+    ".SFNSText-Regular", sans-serif;
+  --vgrid-bg: #f4f4f4; /* layer-01 */
+  --vgrid-header-bg: #e0e0e0; /* layer-accent-01 */
+  --vgrid-hover-bg: #e8e8e8; /* layer-hover-01 */
+  --vgrid-border-color: #c6c6c6; /* border-subtle-01 */
+  --vgrid-text: #525252; /* text-secondary */
+  --vgrid-header-text: #161616; /* text-primary */
+  --vgrid-pinned-divider: var(--vgrid-border-color);
+  --vgrid-cell-padding: 0 1rem;
+
+  font-family: var(--vgrid-font);
+  font-size: 0.875rem;
+  line-height: 1.28572;
+  letter-spacing: 0.16px;
+  color: var(--vgrid-text);
+  background: var(--vgrid-bg);
+}
+
+:where(.vgrid--carbon) :where(.vgrid__header) {
+  color: var(--vgrid-header-text);
+  font-weight: 600;
+}
+
+:where(.vgrid--carbon) :where(.vgrid__row) {
+  background: var(--vgrid-bg);
+}
+
+:where(.vgrid--carbon) :where(.vgrid__cell, .vgrid__pinned-cell) {
+  padding: var(--vgrid-cell-padding);
+  border-bottom: 1px solid var(--vgrid-border-color);
+}
+
+:where(.vgrid--carbon) :where(.vgrid__header-cell) {
+  padding: var(--vgrid-cell-padding);
+}
+
+:where(.vgrid--carbon) :where(.vgrid__pinned) {
+  border-right: 1px solid var(--vgrid-pinned-divider);
+}
+
+:where(.vgrid--carbon) :where(.vgrid__row:hover, .vgrid__row:hover .vgrid__pinned) {
+  background: var(--vgrid-hover-bg);
+  color: var(--vgrid-header-text);
 }
