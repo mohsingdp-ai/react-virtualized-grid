@@ -1,6 +1,6 @@
 {
   "name": "@mejazbese21/react-window-sticky-grid",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Virtualized React grid with sticky header and pinned columns, for very large row and column counts.",
   "keywords": [
     "react",

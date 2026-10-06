@@ -281,6 +281,11 @@ export const VirtualGrid = ({
     [columns, columnState]
   );
 
+  // measured, so `width` can be any CSS value
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof width === "number" ? width : 0
+  );
+
   // width: "auto" columns: measured after render (see autoWidth.js); until
   // then, and if nothing measurable, they use minWidth or the default width
   const rootRef = useRef(null);
@@ -297,7 +302,8 @@ export const VirtualGrid = ({
     // web fonts change text widths; measure again once they load
     document.fonts?.addEventListener("loadingdone", measure);
     return () => document.fonts?.removeEventListener("loadingdone", measure);
-  }, [rows, shownColumns, hasAutoWidth, className]);
+    // sized: more columns are on screen, so more JSX cells to sample
+  }, [rows, shownColumns, hasAutoWidth, className, viewportWidth > 0]);
 
   const { pinnedColumns, scrollColumns, pinnedWidth, offsets } = useMemo(() => {
     const normalized = shownColumns.map((column) => {
@@ -321,10 +327,6 @@ export const VirtualGrid = ({
   }, [shownColumns, autoWidths]);
   const rowWidth = pinnedWidth + offsets[offsets.length - 1];
 
-  // measured, so `width` can be any CSS value
-  const [viewportWidth, setViewportWidth] = useState(
-    typeof width === "number" ? width : 0
-  );
   const slots = columnSlotCount(
     offsets,
     viewportWidth - pinnedWidth,

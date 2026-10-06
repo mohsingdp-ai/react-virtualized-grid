@@ -22,6 +22,7 @@ test('width: "auto" fits the widest value across all rows', () =>
       name: await widthOf(page, "name"),
       memo: await widthOf(page, "memo"),
       status: await widthOf(page, "status"),
+      narration: await widthOf(page, "narration"),
       tiny: await widthOf(page, "tiny")
     };
 
@@ -36,6 +37,13 @@ test('width: "auto" fits the widest value across all rows', () =>
     // custom JSX badges fit (measured from rendered cells)
     assert.ok(await fits(page, '[data-testid="status"]'), "status badges not cut off");
 
+    // scroll to row 300: the JSX narration, never on screen before, fits
+    await page.$eval(".vgrid", (el) => el.scrollTo(0, 300 * 30));
+    await page.waitForSelector('.vgrid__row[aria-rowindex="302"]');
+    const narration = page.locator('.vgrid__row[aria-rowindex="302"] [data-testid="narration"]');
+    assert.equal(await narration.textContent(), await page.evaluate(() => window.__LONG_NARRATION));
+    assert.ok(await narration.evaluate((el) => el.scrollWidth <= el.clientWidth), "long JSX narration not cut off");
+
     // scroll to row 400: its name fits, and no column width changed
     await page.$eval(".vgrid", (el) => el.scrollTo(0, 400 * 30)); // default rowHeight 30
     await page.waitForSelector('.vgrid__row[aria-rowindex="402"]');
@@ -47,10 +55,11 @@ test('width: "auto" fits the widest value across all rows', () =>
         name: await widthOf(page, "name"),
         memo: await widthOf(page, "memo"),
         status: await widthOf(page, "status"),
+        narration: await widthOf(page, "narration"),
         tiny: await widthOf(page, "tiny")
       },
       before,
       "widths stay the same while scrolling"
     );
     assert.deepEqual(await page.evaluate(() => window.__errors), []);
-  }));
+  }, { width: 1600, height: 800 }));

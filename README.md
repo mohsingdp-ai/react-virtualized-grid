@@ -54,9 +54,13 @@ just the ones on screen) and its header:
 ```
 
 - Text values (`row[key]`, or a `render` returning a string/number) are
-  measured for every row, in the cells' real font and padding.
-- Custom JSX cells (badges, links) can't be measured off-screen, so only the
-  rows on screen at measuring time count. Give those a `minWidth`, or a
+  measured for every row, in the column's own font (per-column CSS counts)
+  and padding.
+- JSX made of plain elements (`<span className="bold">{text}</span>`): the
+  text is read from it for every row and measured in the font the rendered
+  cells use, plus the extra width (padding, icons) seen on screen.
+- JSX with your own components inside (`<Badge>`) can't be read without
+  rendering, so only the rows on screen count. Give those a `minWidth`, or a
   fixed `width`.
 - Re-measured when rows, columns, the theme or web fonts change. Never while
   scrolling, so widths don't jump. About 15 ms for 2 columns × 10,000 rows.

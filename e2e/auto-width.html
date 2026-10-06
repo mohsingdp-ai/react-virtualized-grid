@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <title>auto-width e2e</title>
+    <!-- per-column CSS: the long name (off-screen) must be measured bold too -->
+    <style>.vgrid__cell[data-column="name"] { font-weight: 700; }</style>
   </head>
   <body>
     <div id="root"></div>
@@ -13,12 +15,14 @@
       import { createRoot } from "react-dom/client";
       import { VirtualGrid } from "/src/lib/index.js";
 
+      const LONG_NARRATION = "Account balance → E2E pw 202609221748 no cards";
       const LONG_NAME = "Account balance to Account balance transfer reference E3HD5LENA73X";
       const rows = Array.from({ length: 500 }, (_, i) => ({
         id: i,
         name: i === 400 ? LONG_NAME : `User ${i}`,
         memo: "A memo much longer than the maxWidth cap of two hundred pixels allows",
-        status: i % 3 ? "Complete" : "FundsRequired"
+        status: i % 3 ? "Complete" : "FundsRequired",
+        narration: i === 300 ? LONG_NARRATION : `Transfer ${i}`
       }));
       const columns = [
         { key: "id", header: "ID", width: 60, pinned: true },
@@ -33,9 +37,18 @@
           render: (row) =>
             h("span", { className: "pill", style: { display: "inline-block", padding: "0 24px" } }, row.status)
         },
+        {
+          key: "narration",
+          header: "Narration",
+          width: "auto",
+          testId: "narration",
+          // JSX in a bolder font; the longest is on row 300, off-screen at load
+          render: (row) => h("span", { style: { fontWeight: 600 } }, row.narration)
+        },
         { key: "tiny", header: "T", width: "auto", minWidth: 90, testId: "tiny", render: () => "x" }
       ];
       window.__LONG_NAME = LONG_NAME;
+      window.__LONG_NARRATION = LONG_NARRATION;
       window.__errors = [];
       addEventListener("error", (e) => window.__errors.push(e.message));
       createRoot(document.getElementById("root"), {
