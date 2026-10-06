@@ -42,7 +42,7 @@
     "build": "vite build",
     "build:demo": "vite build --mode demo",
     "preview:demo": "vite preview --outDir demo-dist",
-    "test": "node --test src/lib/",
+    "test": "node --test \"src/lib/*.test.js\"",
     "prepublishOnly": "npm test && npm run build"
   },
   "peerDependencies": {
