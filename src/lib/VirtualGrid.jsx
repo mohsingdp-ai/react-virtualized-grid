@@ -180,9 +180,6 @@ const Header = ({
   );
 };
 
-const sameWindow = (next) => (prev) =>
-  prev[0] === next[0] && prev[1] === next[1] ? prev : next;
-
 export const VirtualGrid = ({
   rows,
   columns,
@@ -258,15 +255,31 @@ export const VirtualGrid = ({
     [offsets, slots]
   );
   const scrollLeftRef = useRef(0);
-  const [visibleWindow, setVisibleWindow] = useState(() => getWindow(0));
-  // re-fit before paint when the size or columns change
-  useLayoutEffect(() => {
-    setVisibleWindow(sameWindow(getWindow(scrollLeftRef.current)));
-  }, [getWindow]);
+  // The column window is stored with the getWindow it was computed for. When
+  // columns or size change (hide, pin, reset, resize) it is re-fitted during
+  // this render: React re-runs the component before rendering any rows, so a
+  // row never reads a window that points past the current columns.
+  const [fitted, setFitted] = useState(() => ({
+    getWindow,
+    window: getWindow(0)
+  }));
+  let visibleWindow = fitted.window;
+  if (fitted.getWindow !== getWindow) {
+    visibleWindow = getWindow(scrollLeftRef.current);
+    setFitted({ getWindow, window: visibleWindow });
+  }
 
   const onScroll = (event) => {
     scrollLeftRef.current = event.currentTarget.scrollLeft;
-    setVisibleWindow(sameWindow(getWindow(scrollLeftRef.current)));
+    const next = getWindow(scrollLeftRef.current);
+    // same window: keep the state object, so scrolling within it re-renders nothing
+    setFitted((prev) =>
+      prev.getWindow === getWindow &&
+      prev.window[0] === next[0] &&
+      prev.window[1] === next[1]
+        ? prev
+        : { getWindow, window: next }
+    );
   };
 
   const panelId = `vgrid-columns-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;

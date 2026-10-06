@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>column-shrink e2e</title></head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      // Few columns that all fit on screen, so the column window covers the
+      // last column: hiding/pinning/resetting must not read past the end.
+      import { createElement as h } from "react";
+      import { createRoot } from "react-dom/client";
+      import { VirtualGrid } from "/src/lib/index.js";
+
+      const columns = Array.from({ length: 18 }, (_, i) => ({
+        key: `c${i}`,
+        header: `Col ${i}`,
+        width: 140,
+        hidden: i >= 9
+      }));
+      const rows = Array.from({ length: 200 }, (_, r) =>
+        Object.fromEntries(columns.map((c, i) => [c.key, `${r}-${i}`]))
+      );
+      window.__errors = [];
+      addEventListener("error", (e) => window.__errors.push(e.message));
+      createRoot(document.getElementById("root"), {
+        onUncaughtError: (e) => window.__errors.push(e.message)
+      }).render(h(VirtualGrid, { rows, columns, height: 500, columnManager: true }));
+    </script>
+  </body>
+</html>
