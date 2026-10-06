@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
             cssFileName: "style"
           },
           rollupOptions: {
-            external: [/^react($|\/)/, /^react-dom($|\/)/, /^react-window($|\/)/]
+            external: [/^react($|\/)/, /^react-dom($|\/)/, /^react-window($|\/)/, /^@atlaskit\//]
           }
         }
 }));

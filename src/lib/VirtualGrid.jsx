@@ -1,16 +1,31 @@
 import {
   createContext,
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useContext,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
   useState
 } from "react";
 import { List } from "react-window";
-import { columnOffsets, columnSlotCount, columnWindow } from "./columnWindow.js";
+import {
+  columnOffsets,
+  columnSlotCount,
+  columnWindow
+} from "./columnWindow.js";
+import {
+  applyColumnState,
+  defaultColumnState,
+  syncColumnState
+} from "./columnState.js";
 import "./VirtualGrid.css";
+
+// only loaded when the panel is first opened (it pulls in drag and drop)
+const ColumnManager = lazy(() => import("./ColumnManager.jsx"));
 
 const DEFAULT_COLUMN_WIDTH = 150;
 const OVERSCAN_COLUMN_COUNT = 1;
@@ -23,7 +38,7 @@ const cellContent = (column, row, rowIndex) =>
   column.render ? column.render(row, rowIndex) : row[column.key];
 
 const headerContent = (column) =>
-  column.renderHeader ? column.renderHeader() : column.header ?? column.key;
+  column.renderHeader ? column.renderHeader() : (column.header ?? column.key);
 
 // memo: a column step re-renders every row, but only the recycled cell
 // updates; pinned cells (e.g. checkboxes) are left untouched
@@ -119,7 +134,10 @@ const Header = ({
     );
   }
   return (
-    <div className="vgrid__header" style={{ height: headerHeight, width: rowWidth }}>
+    <div
+      className="vgrid__header"
+      style={{ height: headerHeight, width: rowWidth }}
+    >
       {pinnedColumns.length > 0 && (
         <div className="vgrid__pinned" style={{ width: pinnedWidth }}>
           {pinnedColumns.map((column) => (
@@ -149,12 +167,35 @@ export const VirtualGrid = ({
   width = "100%",
   height,
   overscanRowCount = 1,
+  columnManager = false,
+  initialColumnState,
+  onColumnStateChange,
   className,
   style,
   ...rest
 }) => {
+  // column layout (order / hidden / pinned), fitted to the current columns
+  const [savedState, setSavedState] = useState(
+    () => initialColumnState ?? defaultColumnState(columns)
+  );
+  const columnState = useMemo(
+    () => syncColumnState(savedState, columns),
+    [savedState, columns]
+  );
+  const changeColumnState = useCallback(
+    (next) => {
+      setSavedState(next);
+      onColumnStateChange?.(next);
+    },
+    [onColumnStateChange]
+  );
+  const shownColumns = useMemo(
+    () => applyColumnState(columns, columnState),
+    [columns, columnState]
+  );
+
   const { pinnedColumns, scrollColumns, pinnedWidth, offsets } = useMemo(() => {
-    const normalized = columns.map((column) =>
+    const normalized = shownColumns.map((column) =>
       column.width ? column : { ...column, width: DEFAULT_COLUMN_WIDTH }
     );
     const pinned = normalized.filter((column) => column.pinned);
@@ -165,7 +206,7 @@ export const VirtualGrid = ({
       pinnedWidth: pinned.reduce((sum, column) => sum + column.width, 0),
       offsets: columnOffsets(scrolling.map((column) => column.width))
     };
-  }, [columns]);
+  }, [shownColumns]);
   const rowWidth = pinnedWidth + offsets[offsets.length - 1];
 
   // measured, so `width` can be any CSS value
@@ -178,7 +219,8 @@ export const VirtualGrid = ({
     OVERSCAN_COLUMN_COUNT
   );
   const getWindow = useCallback(
-    (scrollLeft) => columnWindow(offsets, scrollLeft, slots, OVERSCAN_COLUMN_COUNT),
+    (scrollLeft) =>
+      columnWindow(offsets, scrollLeft, slots, OVERSCAN_COLUMN_COUNT),
     [offsets, slots]
   );
   const scrollLeftRef = useRef(0);
@@ -193,42 +235,84 @@ export const VirtualGrid = ({
     setVisibleWindow(sameWindow(getWindow(scrollLeftRef.current)));
   };
 
+  const panelId = `vgrid-columns-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
+  const [managerOpen, setManagerOpen] = useState(false);
+
   return (
-    <ColumnWindowContext.Provider value={visibleWindow}>
-      <List
-        // rows keep react-window's index keys: recycling them by slot makes
-        // React move ~every row node on each upward scroll step
-        rowComponent={Row}
-        rowCount={rows.length}
-        rowHeight={rowHeight}
-        overscanCount={overscanRowCount}
-        rowProps={{
-          rows,
-          pinnedColumns,
-          pinnedWidth,
-          scrollColumns,
-          offsets,
-          rowWidth,
-          headerHeight,
-          slots
-        }}
-        onScroll={onScroll}
-        onResize={(size) => setViewportWidth(size.width)}
-        className={className ? `vgrid ${className}` : "vgrid"}
-        // composited scrolling: without it Chrome repaints the grid every
-        // frame on non-retina screens (to keep LCD text), ~5ms per frame
-        style={{ width, height, overflow: "auto", willChange: "scroll-position", ...style }}
-        {...rest}
-      >
-        <Header
-          headerHeight={headerHeight}
-          rowWidth={rowWidth}
-          pinnedColumns={pinnedColumns}
-          pinnedWidth={pinnedWidth}
-          scrollColumns={scrollColumns}
-          offsets={offsets}
-        />
-      </List>
-    </ColumnWindowContext.Provider>
+    <div
+      className={className ? `vgrid-root ${className}` : "vgrid-root"}
+      style={{ width, height, ...style }}
+      {...rest}
+    >
+      {columnManager && (
+        <div className="vgrid-toolbar">
+          <button
+            type="button"
+            className="vgrid-toolbar__button"
+            popoverTarget={panelId}
+            style={{ anchorName: `--${panelId}` }}
+          >
+            Columns
+          </button>
+          <div
+            id={panelId}
+            popover="auto"
+            className="vgrid-manager"
+            aria-label="Columns"
+            style={{ positionAnchor: `--${panelId}` }}
+            onToggle={(event) => setManagerOpen(event.newState === "open")}
+          >
+            {managerOpen && (
+              <Suspense fallback={null}>
+                <ColumnManager
+                  columns={columns}
+                  state={columnState}
+                  onChange={changeColumnState}
+                />
+              </Suspense>
+            )}
+          </div>
+        </div>
+      )}
+      <ColumnWindowContext.Provider value={visibleWindow}>
+        <List
+          // rows keep react-window's index keys: recycling them by slot makes
+          // React move ~every row node on each upward scroll step
+          rowComponent={Row}
+          rowCount={rows.length}
+          rowHeight={rowHeight}
+          overscanCount={overscanRowCount}
+          rowProps={{
+            rows,
+            pinnedColumns,
+            pinnedWidth,
+            scrollColumns,
+            offsets,
+            rowWidth,
+            headerHeight,
+            slots
+          }}
+          onScroll={onScroll}
+          onResize={(size) => setViewportWidth(size.width)}
+          className="vgrid"
+          // composited scrolling: without it Chrome repaints the grid every
+          // frame on non-retina screens (to keep LCD text), ~5ms per frame
+          style={{
+            minHeight: 0,
+            overflow: "auto",
+            willChange: "scroll-position"
+          }}
+        >
+          <Header
+            headerHeight={headerHeight}
+            rowWidth={rowWidth}
+            pinnedColumns={pinnedColumns}
+            pinnedWidth={pinnedWidth}
+            scrollColumns={scrollColumns}
+            offsets={offsets}
+          />
+        </List>
+      </ColumnWindowContext.Provider>
+    </div>
   );
 };

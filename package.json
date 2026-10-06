@@ -1,6 +1,6 @@
 {
   "name": "react-window-sticky-grid",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Virtualized React grid with sticky header and pinned columns, for very large row and column counts.",
   "keywords": [
     "react",
@@ -50,6 +50,9 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^4.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^3.2.1",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "^3.0.0",
     "react-window": "^2.3.3"
   },
   "devDependencies": {

@@ -7,12 +7,24 @@ export interface VirtualGridColumn<Row> {
   header?: ReactNode;
   /** Width in px. Default 150. */
   width?: number;
-  /** Stick to the left edge while scrolling sideways. */
+  /** Stick to the left edge while scrolling sideways. Initial value when the column manager is on. */
   pinned?: boolean;
+  /** Start hidden. Initial value when the column manager is on. */
+  hidden?: boolean;
+  /** Set false to stop users hiding it in the column manager. Default true. */
+  hideable?: boolean;
   /** Custom cell content. Default: `row[key]`. */
   render?: (row: Row, rowIndex: number) => ReactNode;
   /** Custom header content. Default: `header`. */
   renderHeader?: () => ReactNode;
+}
+
+/** Column layout from the column manager. Arrays of column keys; safe to JSON.stringify. */
+export interface ColumnState {
+  /** All columns in display order, pinned ones first. */
+  order: string[];
+  hidden: string[];
+  pinned: string[];
 }
 
 export interface VirtualGridProps<Row>
@@ -29,6 +41,12 @@ export interface VirtualGridProps<Row>
   height: number | string;
   /** Extra rows rendered above/below the viewport. Default 1. */
   overscanRowCount?: number;
+  /** Show the "Columns" button: reorder (drag or ↑/↓), show/hide and pin columns. Default false. */
+  columnManager?: boolean;
+  /** Restore a saved layout (from `onColumnStateChange`). Unknown keys are ignored, new columns added. */
+  initialColumnState?: ColumnState;
+  /** Called whenever the user changes the layout. Save it to restore later. */
+  onColumnStateChange?: (state: ColumnState) => void;
   className?: string;
   style?: CSSProperties;
 }

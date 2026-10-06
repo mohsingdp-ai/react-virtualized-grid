@@ -36,6 +36,8 @@ const columns = [
 | `header`       | Header label. Defaults to `key`.                     |
 | `width`        | Width in px. Default `150`.                          |
 | `pinned`       | Stick to the left while scrolling sideways. Pinned columns are always shown first. |
+| `hidden`       | Start hidden (users can show it in the column manager). |
+| `hideable`     | `false` stops users hiding it in the column manager.  |
 | `render`       | `(row, rowIndex) => content`. Default: `row[key]`.   |
 | `renderHeader` | `() => content`. Default: `header`.                  |
 
@@ -50,7 +52,41 @@ const columns = [
 | `rowHeight`        | `30`     | Row height in px.                          |
 | `headerHeight`     | `30`     | Header height in px.                       |
 | `overscanRowCount` | `1`      | Extra rows rendered above/below the view.  |
-| `className`, `style`, other div props | | Passed to the scroll container. |
+| `columnManager`    | `false`  | Show the "Columns" button (see below).     |
+| `initialColumnState` | —      | Restore a saved column layout.             |
+| `onColumnStateChange` | —     | Called with the new layout on every change. |
+| `className`, `style`, other div props | | Passed to the outer element. |
+
+## Column manager
+
+`columnManager` adds a "Columns" button that opens a panel to:
+
+- **Reorder**: drag a handle ([Pragmatic drag and drop](https://github.com/atlassian/pragmatic-drag-and-drop)),
+  or focus a handle and press ↑ / ↓. Dropping into the pinned group pins the column.
+- **Show / hide**: checkbox per column; "Show all" at the bottom.
+- **Pin / unpin**: pin button per column.
+- **Reset**: back to the column definitions.
+
+The panel's code (and drag and drop) only loads when it's first opened.
+
+Save the layout to keep it across visits:
+
+```jsx
+const saved = JSON.parse(localStorage.getItem("cols") ?? "null") ?? undefined;
+
+<VirtualGrid
+  columnManager
+  initialColumnState={saved}
+  onColumnStateChange={(state) => localStorage.setItem("cols", JSON.stringify(state))}
+  rows={rows}
+  columns={columns}
+  height={600}
+/>;
+```
+
+The state is `{ order, hidden, pinned }`, each an array of column keys. Saved
+keys for columns that no longer exist are ignored; new columns are added at
+the end.
 
 ## Performance tips
 
@@ -108,9 +144,13 @@ Or change the variables, globally or on your own `className`:
 }
 ```
 
-Elements you can target: `.vgrid` (scroll container), `.vgrid__header`,
-`.vgrid__row`, `.vgrid__cell`, `.vgrid__pinned` (pinned block),
-`.vgrid__pinned-cell`, `.vgrid__header-cell`.
+Elements you can target: `.vgrid-root` (outer element), `.vgrid` (scroll
+container), `.vgrid__header`, `.vgrid__row`, `.vgrid__cell`, `.vgrid__pinned`
+(pinned block), `.vgrid__pinned-cell`, `.vgrid__header-cell`. Column manager:
+`.vgrid-toolbar`, `.vgrid-toolbar__button`, `.vgrid-manager` (panel),
+`.vgrid-manager__item`, `.vgrid-manager__handle`, `.vgrid-manager__pin`,
+`.vgrid-manager__footer`. Extra variables: `--vgrid-accent` (focus, drop
+line), `--vgrid-icon`, `--vgrid-panel-bg`, `--vgrid-panel-shadow`.
 
 ## Develop
 
