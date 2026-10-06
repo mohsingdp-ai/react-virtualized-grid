@@ -1,0 +1,24 @@
+name: Publish to npm
+
+# Publishes when a GitHub Release is published (tag must match package.json version, e.g. v1.2.0).
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # npm trusted publishing (no npm token needed) + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24 # ships npm 11, required for trusted publishing
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - name: Release tag matches package.json version
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: npm publish # prepublishOnly runs tests + build

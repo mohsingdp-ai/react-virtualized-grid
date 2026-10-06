@@ -1,0 +1,58 @@
+/* Override these on .vgrid (or your own className) to theme the grid. */
+.vgrid {
+  --vgrid-border: 1px solid gray;
+  --vgrid-header-bg: lightblue;
+  --vgrid-pinned-bg: lightblue;
+  --vgrid-pinned-header-bg: lightgreen;
+  --vgrid-cell-padding: 0 10px;
+}
+
+.vgrid,
+.vgrid * {
+  box-sizing: border-box;
+}
+
+.vgrid__header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+}
+
+/* pinned cells of one row (or the header), stuck to the left edge */
+.vgrid__pinned {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  background: var(--vgrid-pinned-bg);
+}
+
+.vgrid__header .vgrid__pinned {
+  z-index: 3;
+  background: var(--vgrid-pinned-header-bg);
+}
+
+.vgrid__cell,
+.vgrid__pinned-cell,
+.vgrid__header-cell {
+  display: flex;
+  align-items: center;
+  padding: var(--vgrid-cell-padding);
+  border-right: var(--vgrid-border);
+  border-bottom: var(--vgrid-border);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.vgrid__cell,
+.vgrid__header-cell--scroll {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.vgrid__header-cell--scroll {
+  background: var(--vgrid-header-bg);
+}
