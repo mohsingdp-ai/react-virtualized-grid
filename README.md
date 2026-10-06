@@ -34,7 +34,8 @@ const columns = [
 | -------------- | ---------------------------------------------------- |
 | `key`          | Unique id. Also the field read from each row.        |
 | `header`       | Header label. Defaults to `key`.                     |
-| `width`        | Width in px. Default `150`.                          |
+| `width`        | Width in px, or `"auto"` to fit the content. Default `150`. |
+| `minWidth`, `maxWidth` | Limits for `width: "auto"`, in px.           |
 | `pinned`       | Stick to the left while scrolling sideways. Pinned columns are always shown first. |
 | `hidden`       | Start hidden (users can show it in the column manager). |
 | `hideable`     | `false` stops users hiding it in the column manager.  |
@@ -42,6 +43,23 @@ const columns = [
 | `renderHeader` | `() => content`. Default: `header`.                  |
 | `align`        | `"right"` right-aligns header and cells (numbers).   |
 | `testId`       | `data-testid` on the column's cells; header cells get `"<testId>-header"`. |
+
+### Fit to content
+
+`width: "auto"` sizes a column to its widest value across **all** rows (not
+just the ones on screen) and its header:
+
+```jsx
+{ key: "email", header: "Email", width: "auto", maxWidth: 320 }
+```
+
+- Text values (`row[key]`, or a `render` returning a string/number) are
+  measured for every row, in the cells' real font and padding.
+- Custom JSX cells (badges, links) can't be measured off-screen, so only the
+  rows on screen at measuring time count. Give those a `minWidth`, or a
+  fixed `width`.
+- Re-measured when rows, columns, the theme or web fonts change. Never while
+  scrolling, so widths don't jump. About 15 ms for 2 columns × 10,000 rows.
 
 ## Props
 

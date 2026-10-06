@@ -5,8 +5,17 @@ export interface VirtualGridColumn<Row> {
   key: string;
   /** Header label. Defaults to `key`. */
   header?: ReactNode;
-  /** Width in px. Default 150. */
-  width?: number;
+  /**
+   * Width in px, or "auto": as wide as the widest value across all rows (and the
+   * header). Text values are measured for every row; custom JSX cells only as
+   * rendered. Re-measured when rows, columns, theme or fonts change, never on scroll.
+   * Default 150.
+   */
+  width?: number | "auto";
+  /** Lower bound for `width: "auto"`, in px. */
+  minWidth?: number;
+  /** Upper bound for `width: "auto"`, in px. */
+  maxWidth?: number;
   /** Stick to the left edge while scrolling sideways. Initial value when the column manager is on. */
   pinned?: boolean;
   /** Start hidden. Initial value when the column manager is on. */

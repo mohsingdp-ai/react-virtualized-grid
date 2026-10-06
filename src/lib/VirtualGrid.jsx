@@ -24,6 +24,7 @@ import {
   isColumnState,
   syncColumnState
 } from "./columnState.js";
+import { measureAutoWidths, sameWidths } from "./autoWidth.js";
 import "./VirtualGrid.css";
 
 // useLayoutEffect warns during server rendering on React 18
@@ -87,7 +88,9 @@ const cellAttrs = (column, colIndex, header) => ({
   "aria-colindex": colIndex,
   "data-align": column.align === "right" ? "right" : undefined,
   "data-testid":
-    column.testId && (header ? `${column.testId}-header` : column.testId)
+    column.testId && (header ? `${column.testId}-header` : column.testId),
+  // lets width: "auto" measure rendered custom (JSX) cells of this column
+  "data-column": column.isAutoWidth ? column.key : undefined
 });
 
 const Cell = memo(({ row, rowIndex, column, colIndex, left }) => (
@@ -278,10 +281,35 @@ export const VirtualGrid = ({
     [columns, columnState]
   );
 
+  // width: "auto" columns: measured after render (see autoWidth.js); until
+  // then, and if nothing measurable, they use minWidth or the default width
+  const rootRef = useRef(null);
+  const [autoWidths, setAutoWidths] = useState(null);
+  const hasAutoWidth = shownColumns.some((column) => column.width === "auto");
+  useClientLayoutEffect(() => {
+    if (!hasAutoWidth) return;
+    const measure = () =>
+      setAutoWidths((prev) => {
+        const next = measureAutoWidths(rootRef.current, rows, shownColumns);
+        return sameWidths(prev, next) ? prev : next;
+      });
+    measure();
+    // web fonts change text widths; measure again once they load
+    document.fonts?.addEventListener("loadingdone", measure);
+    return () => document.fonts?.removeEventListener("loadingdone", measure);
+  }, [rows, shownColumns, hasAutoWidth, className]);
+
   const { pinnedColumns, scrollColumns, pinnedWidth, offsets } = useMemo(() => {
-    const normalized = shownColumns.map((column) =>
-      column.width ? column : { ...column, width: DEFAULT_COLUMN_WIDTH }
-    );
+    const normalized = shownColumns.map((column) => {
+      if (column.width === "auto") {
+        const width =
+          autoWidths?.get(column.key) ??
+          column.minWidth ??
+          DEFAULT_COLUMN_WIDTH;
+        return { ...column, width, isAutoWidth: true };
+      }
+      return column.width ? column : { ...column, width: DEFAULT_COLUMN_WIDTH };
+    });
     const pinned = normalized.filter((column) => column.pinned);
     const scrolling = normalized.filter((column) => !column.pinned);
     return {
@@ -290,7 +318,7 @@ export const VirtualGrid = ({
       pinnedWidth: pinned.reduce((sum, column) => sum + column.width, 0),
       offsets: columnOffsets(scrolling.map((column) => column.width))
     };
-  }, [shownColumns]);
+  }, [shownColumns, autoWidths]);
   const rowWidth = pinnedWidth + offsets[offsets.length - 1];
 
   // measured, so `width` can be any CSS value
@@ -357,6 +385,7 @@ export const VirtualGrid = ({
 
   return (
     <div
+      ref={rootRef}
       className={className ? `vgrid-root ${className}` : "vgrid-root"}
       style={{ width, height, maxHeight, ...style }}
       {...rest}

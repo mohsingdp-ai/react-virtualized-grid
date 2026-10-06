@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-width e2e</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      // width: "auto" columns. The longest name is on row 400 (not on screen at
+      // load), so it only fits if every row is measured, not just visible ones.
+      import { createElement as h } from "react";
+      import { createRoot } from "react-dom/client";
+      import { VirtualGrid } from "/src/lib/index.js";
+
+      const LONG_NAME = "Account balance to Account balance transfer reference E3HD5LENA73X";
+      const rows = Array.from({ length: 500 }, (_, i) => ({
+        id: i,
+        name: i === 400 ? LONG_NAME : `User ${i}`,
+        memo: "A memo much longer than the maxWidth cap of two hundred pixels allows",
+        status: i % 3 ? "Complete" : "FundsRequired"
+      }));
+      const columns = [
+        { key: "id", header: "ID", width: 60, pinned: true },
+        { key: "name", header: "Name", width: "auto", testId: "name" },
+        { key: "memo", header: "Memo", width: "auto", maxWidth: 200, testId: "memo" },
+        {
+          key: "status",
+          header: "Status",
+          width: "auto",
+          testId: "status",
+          // custom JSX: measured from the cells on screen
+          render: (row) =>
+            h("span", { className: "pill", style: { display: "inline-block", padding: "0 24px" } }, row.status)
+        },
+        { key: "tiny", header: "T", width: "auto", minWidth: 90, testId: "tiny", render: () => "x" }
+      ];
+      window.__LONG_NAME = LONG_NAME;
+      window.__errors = [];
+      addEventListener("error", (e) => window.__errors.push(e.message));
+      createRoot(document.getElementById("root"), {
+        onUncaughtError: (e) => window.__errors.push(e.message)
+      }).render(
+        h(VirtualGrid, {
+          rows,
+          columns,
+          height: 400,
+          className: "vgrid--carbon"
+        })
+      );
+    </script>
+  </body>
+</html>

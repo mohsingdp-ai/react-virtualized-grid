@@ -14,8 +14,8 @@ const rows = Array.from({ length: ROW_COUNT }, (_, id) => ({
 
 const dataColumns = [
   { key: "id", header: "ID", width: 70, pinned: true },
-  { key: "name", header: "Name", width: 130, pinned: true },
-  { key: "email", header: "Email", width: 220 },
+  { key: "name", header: "Name", width: "auto", pinned: true },
+  { key: "email", header: "Email", width: "auto" }, // fits the longest of 10,000
   ...Array.from({ length: EXTRA_COLUMN_COUNT }, (_, j) => ({
     key: `col${j}`,
     header: `Column ${j}`,
