@@ -31,6 +31,7 @@ const Demo = () => {
   const [theme, setTheme] = useState("vgrid--carbon");
   const [size, setSize] = useState("xs");
   const [manager, setManager] = useState(true);
+  const [ownButton, setOwnButton] = useState(false);
   // Gray 10 is meant for a gray-10 page background (Carbon's $background)
   useEffect(() => {
     document.body.style.background = theme.includes("vgrid--g10") ? "#f4f4f4" : "";
@@ -117,7 +118,21 @@ const Demo = () => {
             onChange={(e) => setManager(e.target.checked)}
           />{" "}
           Column manager
-        </label>
+        </label>{" "}
+        <label>
+          <input
+            type="checkbox"
+            checked={ownButton}
+            onChange={(e) => setOwnButton(e.target.checked)}
+          />{" "}
+          Use my own button
+        </label>{" "}
+        {manager && ownButton && (
+          // any button anywhere can open the panel via its id
+          <button type="button" popoverTarget="demo-columns">
+            Columns ▾
+          </button>
+        )}
       </p>
       <VirtualGrid
         rows={rows}
@@ -125,7 +140,7 @@ const Demo = () => {
         className={theme || undefined}
         rowHeight={SIZES[size]}
         headerHeight={SIZES[size]}
-        columnManager={manager}
+        columnManager={manager && (ownButton ? "demo-columns" : true)}
         // remembers the column layout in this browser
         persistKey="vgrid-demo-columns"
         height="calc(100vh - 140px)"

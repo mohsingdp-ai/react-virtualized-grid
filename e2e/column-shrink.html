@@ -21,9 +21,23 @@
       );
       window.__errors = [];
       addEventListener("error", (e) => window.__errors.push(e.message));
+      // ?external: the app's own Columns button in a separate toolbar
+      const external = location.search.includes("external");
+      const grid = h(VirtualGrid, {
+        rows,
+        columns,
+        height: 500,
+        columnManager: external ? "page-columns" : true
+      });
+      const toolbar = h(
+        "div",
+        { style: { display: "flex", justifyContent: "flex-end", gap: "8px", padding: "16px" } },
+        h("button", { type: "button" }, "Filters"),
+        h("button", { type: "button", id: "my-columns", popoverTarget: "page-columns" }, "Columns")
+      );
       createRoot(document.getElementById("root"), {
         onUncaughtError: (e) => window.__errors.push(e.message)
-      }).render(h(VirtualGrid, { rows, columns, height: 500, columnManager: true }));
+      }).render(external ? h("div", null, toolbar, grid) : grid);
     </script>
   </body>
 </html>

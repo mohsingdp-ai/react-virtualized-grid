@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 
-test("hide / pin / reset / resize never crash the grid", async () => {
+const startServer = async () => {
   const server = await createServer({
     logLevel: "silent",
     server: { port: 0 },
@@ -16,6 +16,11 @@ test("hide / pin / reset / resize never crash the grid", async () => {
     }
   });
   await server.listen();
+  return server;
+};
+
+test("hide / pin / reset / resize never crash the grid", async () => {
+  const server = await startServer();
   const browser = await chromium.launch({ channel: "chrome" });
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 800 } });
@@ -59,6 +64,35 @@ test("hide / pin / reset / resize never crash the grid", async () => {
 
     await step("shrink the viewport", () => page.setViewportSize({ width: 600, height: 800 }));
     await step("grow the viewport", () => page.setViewportSize({ width: 1440, height: 800 }));
+  } finally {
+    await browser.close();
+    await server.close();
+  }
+});
+
+test("columnManager=\"id\": the app's own button opens the panel under it", async () => {
+  const server = await startServer();
+  const browser = await chromium.launch({ channel: "chrome" });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 800 } });
+    await page.goto(`${server.resolvedUrls.local[0]}e2e/column-shrink.html?external`);
+    await page.waitForSelector(".vgrid__cell");
+    assert.equal(await page.$(".vgrid-toolbar"), null, "no built-in Columns button");
+
+    await page.click("#my-columns");
+    await page.waitForSelector(".vgrid-manager__list");
+    const button = await page.locator("#my-columns").boundingBox();
+    const panel = await page.locator(".vgrid-manager").boundingBox();
+    assert.ok(Math.abs(panel.y - (button.y + button.height)) <= 8, "panel opens just below the button");
+    assert.ok(Math.abs(panel.x + panel.width - (button.x + button.width)) <= 2, "panel right-aligned to the button");
+
+    await page.click('[data-key="c8"] input');
+    await page.waitForTimeout(100);
+    assert.deepEqual(await page.evaluate(() => window.__errors), []);
+    assert.equal(await page.$('.vgrid__header-cell--scroll >> text="Col 8"'), null, "Col 8 hidden");
+
+    await page.click("#my-columns"); // same button closes it
+    assert.equal(await page.locator(".vgrid-manager").evaluate((el) => el.matches(":popover-open")), false);
   } finally {
     await browser.close();
     await server.close();

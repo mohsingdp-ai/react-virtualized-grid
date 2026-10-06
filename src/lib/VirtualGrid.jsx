@@ -282,7 +282,13 @@ export const VirtualGrid = ({
     );
   };
 
-  const panelId = `vgrid-columns-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
+  // columnManager={true}: built-in Columns button. columnManager="some-id":
+  // no built-in button; any <button popoverTarget="some-id"> on the page
+  // opens the panel (native popover), positioned under whichever button did.
+  const generatedId = `vgrid-columns-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
+  const panelId =
+    typeof columnManager === "string" ? columnManager : generatedId;
+  const builtInButton = columnManager === true;
   const [managerOpen, setManagerOpen] = useState(false);
 
   return (
@@ -291,7 +297,7 @@ export const VirtualGrid = ({
       style={{ width, height, ...style }}
       {...rest}
     >
-      {columnManager && (
+      {builtInButton && (
         <div className="vgrid-toolbar">
           <button
             type="button"
@@ -301,24 +307,27 @@ export const VirtualGrid = ({
           >
             Columns
           </button>
-          <div
-            id={panelId}
-            popover="auto"
-            className="vgrid-manager"
-            aria-label="Columns"
-            style={{ positionAnchor: `--${panelId}` }}
-            onToggle={(event) => setManagerOpen(event.newState === "open")}
-          >
-            {managerOpen && (
-              <Suspense fallback={null}>
-                <ColumnManager
-                  columns={columns}
-                  state={columnState}
-                  onChange={changeColumnState}
-                />
-              </Suspense>
-            )}
-          </div>
+        </div>
+      )}
+      {columnManager && (
+        <div
+          id={panelId}
+          popover="auto"
+          className="vgrid-manager"
+          aria-label="Columns"
+          // an external button is the popover's implicit anchor
+          style={builtInButton ? { positionAnchor: `--${panelId}` } : undefined}
+          onToggle={(event) => setManagerOpen(event.newState === "open")}
+        >
+          {managerOpen && (
+            <Suspense fallback={null}>
+              <ColumnManager
+                columns={columns}
+                state={columnState}
+                onChange={changeColumnState}
+              />
+            </Suspense>
+          )}
         </div>
       )}
       <ColumnWindowContext.Provider value={visibleWindow}>

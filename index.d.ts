@@ -41,8 +41,12 @@ export interface VirtualGridProps<Row>
   height: number | string;
   /** Extra rows rendered above/below the viewport. Default 1. */
   overscanRowCount?: number;
-  /** Show the "Columns" button: reorder (drag or ↑/↓), show/hide and pin columns. Default false. */
-  columnManager?: boolean;
+  /**
+   * Column manager panel: reorder (drag or ↑/↓), show/hide and pin columns. Default false.
+   * - `true`: the grid shows its own "Columns" button.
+   * - a string id: no built-in button; any `<button popoverTarget={id}>` on the page opens it.
+   */
+  columnManager?: boolean | string;
   /** Restore a saved layout (from `onColumnStateChange`). Read once on mount. Unknown keys are ignored, new columns added. */
   initialColumnState?: ColumnState;
   /** Called whenever the user changes the layout. Save it to restore later. */

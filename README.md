@@ -52,7 +52,7 @@ const columns = [
 | `rowHeight`        | `30`     | Row height in px.                          |
 | `headerHeight`     | `30`     | Header height in px.                       |
 | `overscanRowCount` | `1`      | Extra rows rendered above/below the view.  |
-| `columnManager`    | `false`  | Show the "Columns" button (see below).     |
+| `columnManager`    | `false`  | `true`: built-in "Columns" button. An id: open it from your own button (see below). |
 | `initialColumnState` | —      | Restore a saved column layout.             |
 | `onColumnStateChange` | —     | Called with the new layout on every change. |
 | `persistKey`       | —        | Save the layout in this browser under this key. |
@@ -67,6 +67,26 @@ const columns = [
 - **Show / hide**: checkbox per column; "Show all" at the bottom.
 - **Pin / unpin**: pin button per column.
 - **Reset**: back to the column definitions.
+
+### Your own button
+
+Put the Columns button anywhere (e.g. next to your filters): give
+`columnManager` an id instead of `true`, and point any button at it:
+
+```jsx
+<Toolbar>
+  <FiltersButton />
+  <button popoverTarget="txn-columns">Columns</button>
+</Toolbar>
+
+<VirtualGrid columnManager="txn-columns" rows={rows} columns={columns} height={600} />
+```
+
+The grid then shows no button of its own. Clicking yours opens the panel
+under it (where CSS anchor positioning is supported; elsewhere it opens
+centered); clicking again, clicking outside or Esc closes it. Uses the native
+`popover` API, so it works from plain HTML too (`popovertarget="txn-columns"`)
+or from code: `document.getElementById("txn-columns").togglePopover()`.
 
 The panel's code (and drag and drop) only loads when it's first opened.
 
