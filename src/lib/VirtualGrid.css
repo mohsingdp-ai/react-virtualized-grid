@@ -94,6 +94,17 @@
   color: var(--vgrid-text);
 }
 
+/*
+ * Carbon Gray 10 theme: white rows on a gray-10 page.
+ * Use with the Carbon look: className="vgrid--carbon vgrid--g10".
+ * Only colors that differ from the white theme are set.
+ */
+:where(.vgrid--g10) {
+  --vgrid-bg: #ffffff; /* layer-01 */
+  --vgrid-border-color: #e0e0e0; /* border-subtle-01 */
+  --vgrid-panel-bg: #ffffff; /* layer-01 */
+}
+
 :where(.vgrid--carbon) :where(.vgrid) {
   background: var(--vgrid-bg);
 }

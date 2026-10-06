@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { VirtualGrid } from "../lib";
 
 const ROW_COUNT = 10000;
@@ -31,6 +31,10 @@ const Demo = () => {
   const [theme, setTheme] = useState("vgrid--carbon");
   const [size, setSize] = useState("xs");
   const [manager, setManager] = useState(true);
+  // Gray 10 is meant for a gray-10 page background (Carbon's $background)
+  useEffect(() => {
+    document.body.style.background = theme.includes("vgrid--g10") ? "#f4f4f4" : "";
+  }, [theme]);
   const [checkedRows, setCheckedRows] = useState({});
   // derived, not stored: avoids a second render after every click
   const checkedCount = Object.keys(checkedRows).length;
@@ -91,7 +95,8 @@ const Demo = () => {
         <label>
           Theme{" "}
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-            <option value="vgrid--carbon">Carbon</option>
+            <option value="vgrid--carbon">Carbon (White)</option>
+            <option value="vgrid--carbon vgrid--g10">Carbon (Gray 10)</option>
             <option value="">None (unstyled)</option>
           </select>
         </label>{" "}

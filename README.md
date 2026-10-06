@@ -136,6 +136,12 @@ theme). Add the class and pick a Carbon row size:
 
 It uses IBM Plex Sans if your page loads it, else the system font.
 
+**Gray 10** (white rows, for a `#f4f4f4` page): add `vgrid--g10` too.
+
+```jsx
+<VirtualGrid className="vgrid--carbon vgrid--g10" rowHeight={24} headerHeight={24} ... />
+```
+
 ### Overriding
 
 All built-in styles have zero specificity, so plain CSS wins, no `!important`:
